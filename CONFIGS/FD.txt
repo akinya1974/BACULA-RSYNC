@@ -1,0 +1,22 @@
+Director {
+  Name = VM2-dir
+  Password = "root"
+}
+Director {
+  Name = VM2-mon
+  Password = "root"
+  Monitor = yes
+}
+FileDaemon {                          # this is me
+  Name = VM2-fd
+  FDport = 9102                  # where we listen for the director
+  WorkingDirectory = /var/lib/bacula
+  Pid Directory = /run/bacula
+  Maximum Concurrent Jobs = 20
+  Plugin Directory = /usr/lib/bacula
+  FDAddress = 192.168.1.77
+}
+Messages {
+  Name = Standard
+  director = VM2-dir = all, !skipped, !restored
+}

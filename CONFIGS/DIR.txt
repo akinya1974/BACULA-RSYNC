@@ -1,0 +1,172 @@
+Director {                            # define myself
+  Name = VM2-dir
+  DIRport = 9101                # where we listen for UA connections
+  QueryFile = "/etc/bacula/scripts/query.sql"
+  WorkingDirectory = "/var/lib/bacula"
+  PidDirectory = "/run/bacula"
+  Maximum Concurrent Jobs = 20
+  Password = "root"         # Console password
+  Messages = Daemon
+  DirAddress = 192.168.1.77
+}
+JobDefs {
+  Name = "DefaultJob"
+  Type = Backup
+  Level = Incremental
+  Client = VM2-fd
+  FileSet = "Full Set"
+  Schedule = "WeeklyCycle"
+  Storage = File1
+  Messages = Standard
+  Pool = File
+  SpoolAttributes = yes
+  Priority = 10
+  Write Bootstrap = "/var/lib/bacula/%c.bsr"
+}
+Job {
+  Name = "BackupLocalFiles"
+  JobDefs = "DefaultJob"
+}
+Job {
+  Name = "BackupCatalog"
+  JobDefs = "DefaultJob"
+  Level = Full
+  FileSet="Catalog"
+  Schedule = "WeeklyCycleAfterBackup"
+  # This creates an ASCII copy of the catalog
+  # Arguments to make_catalog_backup.pl are:
+  #  make_catalog_backup.pl <catalog-name>
+  RunBeforeJob = "/etc/bacula/scripts/make_catalog_backup.pl MyCatalog"
+  # This deletes the copy of the catalog
+  RunAfterJob  = "/etc/bacula/scripts/delete_catalog_backup"
+  Write Bootstrap = "/var/lib/bacula/%n.bsr"
+  Priority = 11                   # run after main backup
+}
+Job {
+  Name = "RestoreLocalFiles"
+  Type = Restore
+  Client=VM2-fd
+  Storage = File1
+  FileSet="Full Set"
+  Pool = File
+  Messages = Standard
+  Where = /bacula/restore
+}
+FileSet {
+  Name = "Full Set"
+  Include {
+    Options {
+      signature = MD5
+        compression = GZIP
+    }
+    File = /
+  }
+  Exclude {
+    File = /var/lib/bacula
+    File = /bacula
+    File = /proc
+    File = /tmp
+    File = /sys
+    File = /.journal
+    File = /.fsck
+  }
+}
+Schedule {
+  Name = "WeeklyCycle"
+  Run = Full 1st sun at 23:05
+  Run = Differential 2nd-5th sun at 23:05
+  Run = Incremental mon-sat at 23:05
+}
+Schedule {
+  Name = "WeeklyCycleAfterBackup"
+  Run = Full sun-sat at 23:10
+}
+FileSet {
+  Name = "Catalog"
+  Include {
+    Options {
+      signature = MD5
+    }
+    File = "/var/lib/bacula/bacula.sql"
+  }
+}
+Client {
+  Name = VM2-fd
+  Address = localhost
+  FDPort = 9102
+  Catalog = MyCatalog
+  Password = "root"          # password for FileDaemon
+  File Retention = 60 days            # 60 days
+  Job Retention = 6 months            # six months
+  AutoPrune = yes                     # Prune expired Jobs/Files
+}
+Autochanger {
+  Name = File1
+  Address = 192.168.1.77                # N.B. Use a fully qualified name here
+  SDPort = 9103
+  Password = "root"
+  Device = FileChgr1
+  Media Type = File1
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+  Autochanger = File1                 # point to ourself
+}
+Autochanger {
+  Name = File2
+  Address = 192.168.1.77                # N.B. Use a fully qualified name here
+  SDPort = 9103
+  Password = "root"
+  Device = FileChgr2
+  Media Type = File2
+  Autochanger = File2                 # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+Catalog {
+  Name = MyCatalog
+  dbname = "bacula"; DB Address = "localhost"; dbuser = "bacula"; dbpassword = "1234"
+}
+Messages {
+  Name = Standard
+  mailcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: %t %e of %c %l\" %r"
+  operatorcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: Intervention needed for %j\" %r"
+  mail = root = all, !skipped
+  operator = root = mount
+  console = all, !skipped, !saved
+  append = "/var/log/bacula/bacula.log" = all, !skipped
+  catalog = all
+}
+Messages {
+  Name = Daemon
+  mailcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula daemon message\" %r"
+  mail = root = all, !skipped
+  console = all, !skipped, !saved
+  append = "/var/log/bacula/bacula.log" = all, !skipped
+}
+Pool {
+  Name = Default
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365 days         # one year
+  Maximum Volume Bytes = 2G          # Limit Volume size to something reasonable
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+}
+Pool {
+  Name = File
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365 days         # one year
+  Maximum Volume Bytes = 2G          # Limit Volume size to something reasonable
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+ # Label Format = "Vol-"
+  Label Format = Local-              # Auto label
+}
+Pool {
+  Name = Scratch
+  Pool Type = Backup
+}
+Console {
+  Name = VM2-mon
+  Password = "root"
+  CommandACL = status, .status
+}
