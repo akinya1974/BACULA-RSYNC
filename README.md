@@ -32,7 +32,7 @@ https://github.com/akinya1974/BACULA-RSYNC/tree/main/CONFIGS
 
 ### backup-node1.sh
 
-'''
+```
 #!/bin/bash
 date
 syst_dir=/backup/
@@ -51,9 +51,9 @@ ${syst_dir}${srv_name}/current/ --backup
 -mtime +30 -exec rm -rf {} \;
 date
 echo "Finish backup ${srv_name}"
-'''
+```
 ### rsyncd.conf
-'''
+```
 pid file = /var/run/rsyncd.pid
 log file = /var/log/rsyncd.log
 transfer logging = true
@@ -66,7 +66,7 @@ list = yes
 comment = Data backup Dir
 auth users = akinya
 secrets file = /etc/rsyncd.scrt
-'''
+```
 
 
 ![LISTEN PORT](https://github.com/akinya1974/BACULA-RSYNC/blob/main/JPG/LISTEN%20PORT%20RCYNC.jpg)
