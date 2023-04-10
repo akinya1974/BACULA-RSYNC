@@ -15,7 +15,7 @@
 
 2. `Кофиги прилагаются`
 
-[https://github.com/akinya1974/BACULA-RSYNC/tree/main/CONFIGS]
+https://github.com/akinya1974/BACULA-RSYNC/tree/main/CONFIGS
 
 ![RUN](https://github.com/akinya1974/BACULA-RSYNC/blob/main/JPG/RUN-2.jpg)
 
