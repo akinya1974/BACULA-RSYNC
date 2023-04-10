@@ -71,5 +71,3 @@ secrets file = /etc/rsyncd.scrt
 
 ![LISTEN PORT](https://github.com/akinya1974/BACULA-RSYNC/blob/main/JPG/LISTEN%20PORT%20RCYNC.jpg)
 
-
-![NETSTAT](https://github.com/akinya1974/BACULA-RSYNC/blob/main/JPG/RSYNC%20-netstat.jpg)
